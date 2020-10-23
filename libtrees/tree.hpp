@@ -56,11 +56,10 @@ namespace tree
             void ClearChildren();
 
             [[nodiscard]] tree::TreeNode<T>* Detatch();
-            void Attach(int index);
 
         // Static functions
         public:
-            static void swap(tree::TreeNode<T>& NodeA, tree::TreeNode<T>& NodeB);
+            static void Swap(tree::TreeNode<T>& NodeA, tree::TreeNode<T>& NodeB);
 
     };
 
@@ -286,4 +285,27 @@ tree::TreeNode<T>* tree::TreeNode<T>::Detatch()
         m_parent->RemoveChild(this);
     }
     return this;
+}
+
+/**
+ * \brief Swap two node contents
+ *
+ * \detail This function only swaps the contents of two nodes, it does not
+ *         touch any children or parents. To move subtrees around, use Detach()
+ *         and Append()/Insert() as they have very low overhead, with only moving
+ *         pointers around and not possibly large data structures/classes.
+ *
+ * \tparam T Any basic type or complex data structure or class.
+ *
+ * \param  NodeA Do I really have to describe what these two parameters are for?
+ *
+ * \param  NodeB See above^^^
+ */
+template<typename T>
+void tree::TreeNode<T>::Swap(tree::TreeNode<T>& NodeA, tree::TreeNode<T>& NodeB)
+{
+    // This only swaps the contents(value) of the nodes
+    T temp = NodeA.m_content;
+    NodeA.m_content = NodeB.m_content;
+    NodeB.m_content = temp;
 }
