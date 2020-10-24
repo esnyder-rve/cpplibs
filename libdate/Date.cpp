@@ -1,11 +1,11 @@
 #include "Date.hpp"
 
-Date::Date()
+date::Date::Date()
 {
 	m_usable = false;
 }
 
-Date::Date(int day, int month, int year, bool month_as_index = false)
+date::Date::Date(int day, int month, int year, bool month_as_index = false)
 {
 	m_day = day;
 	if(month_as_index)
@@ -25,7 +25,7 @@ Date::Date(int day, int month, int year, bool month_as_index = false)
 
 }
 
-bool Date::Validate_Date()
+bool date::Date::Validate_Date()
 {
 	int month_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	bool adjusted = false;
@@ -77,12 +77,12 @@ bool Date::Validate_Date()
 	return !adjusted; // Return True if no corrections were needed (Date was okay); False if corrections were made
 }
 
-int Date::Get_Day()
+int date::Date::Get_Day()
 {
 	return m_day;
 }
 
-std::string Date::Get_Month_Str(bool as_abbreviation)
+std::string date::Date::Get_Month_Str(bool as_abbreviation)
 {
 	switch(m_month)
 	{
@@ -116,7 +116,7 @@ std::string Date::Get_Month_Str(bool as_abbreviation)
 	}
 }
 
-int Date::Get_Month(bool month_as_index)
+int date::Date::Get_Month(bool month_as_index)
 {
 	if(month_as_index)
 	{
@@ -128,7 +128,7 @@ int Date::Get_Month(bool month_as_index)
 	}
 }
 
-std::string Date::Get_Day_Name()
+std::string date::Date::Get_Day_Name()
 {
 	if(m_usable)
 	{
@@ -158,7 +158,7 @@ std::string Date::Get_Day_Name()
 	return(nullptr); // Should never get here, but if it does, return null
 }
 
-int Date::Get_Day_Name(bool return_as_index)
+int date::Date::Get_Day_Name(bool return_as_index)
 {
 	if(m_usable)
 	{
@@ -177,53 +177,53 @@ int Date::Get_Day_Name(bool return_as_index)
     return -1;
 }
 
-void Date::Add_Days(int days)
+void date::Date::Add_Days(int days)
 {
 	m_day += days;
 	this->Validate_Date();
 }
 
-std::tuple<int, int, int> Date::Get_Date()
+std::tuple<int, int, int> date::Date::Get_Date()
 {
 	return std::make_tuple(m_day, m_month, m_year);
 }
 
 // Operators
-void Date::operator++()
+void date::Date::operator++()
 {
 	m_day++;
 	this->Validate_Date();
 }
 
-void Date::operator--()
+void date::Date::operator--()
 {
 	m_day--;
 	this->Validate_Date();
 }
 
-void Date::operator+=(int days)
+void date::Date::operator+=(int days)
 {
 	m_day += days;
 	this->Validate_Date();
 }
 
-void Date::operator-=(int days)
+void date::Date::operator-=(int days)
 {
 	m_day -= days;
 	this->Validate_Date();
 }
 
-bool Date::operator!=(Date second_date)
+bool date::Date::operator!=(Date second_date)
 {
 	return((this->m_day != second_date.m_day) || (this->m_month != second_date.m_month) || (this->m_year != second_date.m_year));
 }
 
-bool Date::operator==(Date second_date)
+bool date::Date::operator==(Date second_date)
 {
 	return((this->m_day == second_date.m_day) && (this->m_month == second_date.m_month) && (this->m_year == second_date.m_year));
 }
 
-bool Date::operator<(Date second_date)
+bool date::Date::operator<(Date second_date)
 {
 	if(this->m_year < second_date.m_year)
 	{
@@ -253,7 +253,7 @@ bool Date::operator<(Date second_date)
 	return(false);
 }
 
-bool Date::operator>(Date second_date)
+bool date::Date::operator>(Date second_date)
 {
 	if(this->m_year > second_date.m_year)
 	{
@@ -283,7 +283,7 @@ bool Date::operator>(Date second_date)
 	return(false);
 }
 
-bool Date::operator<=(Date second_date)
+bool date::Date::operator<=(Date second_date)
 {
 	if(this->m_year < second_date.m_year)
 	{
@@ -313,7 +313,7 @@ bool Date::operator<=(Date second_date)
 	return(false);
 }
 
-bool Date::operator>=(Date second_date)
+bool date::Date::operator>=(Date second_date)
 {
 	if(this->m_year > second_date.m_year)
 	{
@@ -343,7 +343,7 @@ bool Date::operator>=(Date second_date)
 	return(false);
 }
 
-std::string Date::ToString(string_style style, char delimiter=0)
+std::string date::Date::ToString(date::DateFormat style, char delimiter=0)
 {
 	if(m_usable)
 	{
@@ -351,28 +351,28 @@ std::string Date::ToString(string_style style, char delimiter=0)
         char* formatted_date;
 		switch(style)
 		{
-            case Date::string_style::MMDDYY:
+            case date::DateFormat::MMDDYY:
     			str_year = std::to_string(m_year);
-                std::sprintf(formatted_date, "%02d%c%02d%c%c%c", m_month, delimiter, day, delimiter, str_year[2], str_year[3]);
+                std::sprintf(formatted_date, "%02d%c%02d%c%c%c", m_month, delimiter, m_day, delimiter, str_year[2], str_year[3]);
                 break;
-            case Date::string_style::MMDDYYYY:
-                std::sprintf(formatted_date, "%02d%c%02d%c%d", month, delimiter, day, delimiter, year);
+            case date::DateFormat::MMDDYYYY:
+                std::sprintf(formatted_date, "%02d%c%02d%c%d", m_month, delimiter, m_day, delimiter, m_year);
                 break;
-            case Date::string_style::DDMMYY:
-                 str_year = std::to_string(year);
-                 std::sprintf(formatted_date, "%02d%c%02d%c%c%c", day, delimiter, month, delimiter, str_year[2], str_year[3]);
-            case Date::string_style::DDMMYYYY:
-                 std::sprintf(formatted_date, "%02d%c%02d%c%d", day, delimiter, month, delimiter, year);
-            case Date::string_style::MDYYYY:
-                 std::sprintf(formatted_date, "%d%c%d%c%d", month, delimiter, day, delimiter, year);
-            case Date::string_style::MDYY:
-				 str_year = std::to_string(year);
-				 sprintf(formatted_date, "%d%c%d%c%c%c", month, delimiter, day, delimiter, str_year[2], str_year[3]);
-            case Date::string_style::DMYYYY:
-                 std::sprintf(formatted_date, "%d%c%d%c%d", day, delimiter, month, delimiter, year);
-            case Date::string_style::DMYY:
-				str_year = std::to_string(year);
-                std::sprintf(formatted_date, "%d%c%d%c%c%c", day, delimiter, month, delimiter, str_year[2], str_year[3]);
+            case date::DateFormat::DDMMYY:
+                 str_year = std::to_string(m_year);
+                 std::sprintf(formatted_date, "%02d%c%02d%c%c%c", m_day, delimiter, m_month, delimiter, str_year[2], str_year[3]);
+            case date::DateFormat::DDMMYYYY:
+                 std::sprintf(formatted_date, "%02d%c%02d%c%d", m_day, delimiter, m_month, delimiter, m_year);
+            case date::DateFormat::MDYYYY:
+                 std::sprintf(formatted_date, "%d%c%d%c%d", m_month, delimiter, m_day, delimiter, m_year);
+            case date::DateFormat::MDYY:
+				 str_year = std::to_string(m_year);
+				 sprintf(formatted_date, "%d%c%d%c%c%c", m_month, delimiter, m_day, delimiter, str_year[2], str_year[3]);
+            case date::DateFormat::DMYYYY:
+                 std::sprintf(formatted_date, "%d%c%d%c%d", m_day, delimiter, m_month, delimiter, m_year);
+            case date::DateFormat::DMYY:
+				str_year = std::to_string(m_year);
+                std::sprintf(formatted_date, "%d%c%d%c%c%c", m_day, delimiter, m_month, delimiter, str_year[2], str_year[3]);
 			default:
 				// As this is based off of an enumeration, this should never happen:
 				return nullptr;
