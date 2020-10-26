@@ -21,7 +21,7 @@ date::Date::Date(int day, int month, int year, bool month_as_index = false)
 	m_year = year;
 }
 
-bool date::Date::Validate_Date()
+bool date::Date::Validate()
 {
 	int month_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	bool adjusted = false;
@@ -69,12 +69,12 @@ bool date::Date::Validate_Date()
 	return !adjusted; // Return True if no corrections were needed (Date was okay); False if corrections were made
 }
 
-int date::Date::Get_Day()
+int date::Date::Day()
 {
 	return m_day;
 }
 
-std::string date::Date::Get_Month_Str(bool as_abbreviation)
+std::string date::Date::MonthName(bool as_abbreviation)
 {
 	switch(m_month)
 	{
@@ -108,101 +108,72 @@ std::string date::Date::Get_Month_Str(bool as_abbreviation)
 	}
 }
 
-int date::Date::Get_Month(bool month_as_index)
+int date::Date::Month()
 {
-	if(month_as_index)
-	{
-		return m_month;
-	}
-	else
-	{
-		return m_month + 1;
-	}
+    return m_month;
 }
 
-std::string date::Date::Get_Day_Name()
+std::string date::Date::DayName(bool as_abbreviation)
 {
-	if(m_usable)
-	{
-		int temp_year = m_year;
-		int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-		temp_year -= m_month < 3;
-		switch(((temp_year + temp_year/4 - temp_year/100 + temp_year/400 + t[m_month-1] + m_day) % 7))
-		{
-			case 0:
-				return("Sunday");
-			case 1:
-				return("Monday");
-			case 2:
-				return("Tuesday");
-			case 3:
-				return("Wednesday");
-			case 4:
-				return("Thursday");
-			case 5:
-				return("Friday");
-			case 6:
-				return("Saturday");
-			default:
-				return(nullptr); // Should never get here, but if it does, return null
-		}
-	}
+    if(!m_usable)
+        return nullptr;
+
+    switch(DayOfWeek())
+    {
+        case 1:
+            return as_abbreviation ? "Sun" : "Sunday";
+        case 2:
+            return as_abbreviation ? "Mon" : "Monday";
+        case 3:
+            return as_abbreviation ? "Tue" : "Tuesday";
+        case 4:
+            return as_abbreviation ? "Wed" : "Wednesday";
+        case 5:
+            return as_abbreviation ? "Thu" : "Thursday";
+        case 6:
+            return as_abbreviation ? "Fri" : "Friday";
+        case 7:
+            return as_abbreviation ? "Sat" : "Saturday";
+        default:
+            return nullptr;
+    }
 	return(nullptr); // Should never get here, but if it does, return null
 }
 
-int date::Date::Get_Day_Name(bool return_as_index)
+int date::Date::DayOfWeek()
 {
-	if(m_usable)
-	{
-		int temp_year = m_year;
-		int result;
-		int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-		temp_year -= m_month < 3;
-		result = ((temp_year + temp_year/4 - temp_year/100 + temp_year/400 + t[m_month-1] + m_day) % 7);
-		if(!return_as_index)
-		{
-			result++;
-		}
-
-		return(result);
-	}
-    return -1;
+    if(!m_usable)
+        return -1;
+    int temp_year = m_year;
+    static int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+    temp_year -= m_month < 3;
+    return ((temp_year + temp_year/4 - temp_year/100 + temp_year/400 + t[m_month - 1] + m_day) % 7) + 1;
 }
 
-void date::Date::Add_Days(int days)
+void date::Date::AddDays(int days)
 {
 	m_day += days;
-	this->Validate_Date();
-}
-
-std::tuple<int, int, int> date::Date::Get_Date()
-{
-	return std::make_tuple(m_day, m_month, m_year);
 }
 
 // Operators
 void date::Date::operator++()
 {
 	m_day++;
-	this->Validate_Date();
 }
 
 void date::Date::operator--()
 {
 	m_day--;
-	this->Validate_Date();
 }
 
 void date::Date::operator+=(int days)
 {
 	m_day += days;
-	this->Validate_Date();
 }
 
 void date::Date::operator-=(int days)
 {
 	m_day -= days;
-	this->Validate_Date();
 }
 
 bool date::Date::operator!=(Date second_date)

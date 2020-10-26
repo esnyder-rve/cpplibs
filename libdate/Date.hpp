@@ -3,6 +3,8 @@
  *     Fix month implementation from 0-11 to 1-12
  *     Change function names
  *     Add abbreviations to Get_Day_Name
+ *     Remove std::tuple
+ *     Add export to std::chrono
  */
 #ifndef DATE_HPP
 #define DATE_HPP
@@ -10,6 +12,7 @@
 #include <tuple>
 #include <string>
 #include <cstdio>
+#include <chrono> // <-- TODO
 
 namespace date
 {
@@ -67,19 +70,19 @@ namespace date
             void Month(int month, bool month_as_index = false);
             int Year();
             void Year(int year);
-            bool Validate_Date();
-            int Get_Day();
-            std::string Get_Month_Str(bool);
-            int Get_Month(bool);
-            int Get_Year();
-            std::string Get_Day_Name();
-            int Get_Day_Name(bool);
-            void Add_Days(int);
-            std::tuple<int, int, int>Get_Date();
+            bool Validate();
+            std::string MonthName(bool);
+            std::string DayName(bool);
+            int DayOfWeek();
+            void AddDays(int);
             std::string ToString(DateFormat, char);
+            std::string ToString(const char*);
+            std::string ToString(std::string);
             // Operators
             void operator++();
             void operator--();
+            void operator++(int);
+            void operator--(int);
             void operator+=(int);
             void operator-=(int);
             bool operator==(Date);
