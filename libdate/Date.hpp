@@ -1,3 +1,9 @@
+/*
+ * TODO
+ *     Fix month implementation from 0-11 to 1-12
+ *     Change function names
+ *     Add abbreviations to Get_Day_Name
+ */
 #ifndef DATE_HPP
 #define DATE_HPP
 
@@ -23,7 +29,7 @@ namespace date
     {
         private:
             int m_day;
-            int m_month;
+            int m_month;        // Month of year stored as 1-12
             int m_year;
             bool m_usable;
 

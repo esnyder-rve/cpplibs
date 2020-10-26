@@ -11,18 +11,14 @@ date::Date::Date(int day, int month, int year, bool month_as_index = false)
 	if(month_as_index)
 	{
         // Month passed is from 0-11
-		m_month = month;
+		m_month = month + 1;
 	}
 	else
 	{
         // Month passed is from 1-12
-		m_month = month - 1;
+		m_month = month;
 	}
 	m_year = year;
-
-	// Validate Date:
-	this->Validate_Date();
-
 }
 
 bool date::Date::Validate_Date()
@@ -32,44 +28,40 @@ bool date::Date::Validate_Date()
 	bool validating = true;
 	while(validating)
 	{
-		// Check for Leap Year (Only changes the value if needed)
-		if((m_year % 4) == 0 && month_days[1] != 29)
-		{
-			month_days[1] = 29;
-		}
-		else if(month_days[1] != 28)
-		{
-			month_days[1] = 28;
-		}
+		// Check for Leap Year
+        month_days[1] = ((m_year % 4) == 0) ? 29 : 28;
 
-		// Check if month if not in between 0-11
-		while(m_month >= 12)
+		// Check if month if not in between 1-12
+		while(m_month > 12)
 		{
 			m_month -= 12;
-			m_year++;
+			++m_year;
 			adjusted = true;
 		}
-		while(m_month < 0)
+		while(m_month < 1)
 		{
 			m_month += 12;
-			m_year--;
+			--m_year;
 			adjusted = true;
 		}
 
 		// Check days
-		if(m_day > month_days[m_month])
+		if(m_day > month_days[m_month - 1])
 		{
-			m_day -= month_days[++m_month];
+			m_day -= month_days[m_month - 1];
+            ++m_month;
 			adjusted = true;
 		}
-		if(m_day <= 0)
+		if(m_day < 1)
 		{
 			m_day *= -1;
-			m_day = month_days[--m_month] - m_day;
+			m_day = month_days[m_month - 1] - m_day;
+            --m_month;
 			adjusted = true;
 		}
 
-		if((m_month >= 0 && m_month < 12) && (m_day > 0 && m_day <= month_days[m_month]))
+        // If the date is valid, set the validating flag to false to exit the loop
+		if((m_month >= 1 && m_month <= 12) && (m_day >=1 && m_day <= month_days[m_month - 1]))
 		{
 			validating = false;
 		}
