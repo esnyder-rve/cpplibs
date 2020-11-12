@@ -4,7 +4,7 @@
  * 
  * \details Trees can hold any type of data, but only of one
  *          type. The tree nodes can have as many or as few
- *          nodes as you like. For Binary Trees, see BTree.hpp.
+ *          nodes as you like. For Binary Trees, see btree.hpp.
  *
  * \warning When assigning parents to nodes, this class does
  *          NOT check for circular dependencies. Infinitely
@@ -157,15 +157,15 @@ namespace tree
              *
              * \param  NodeB See above^^^
              */
-            static void Swap(tree::TreeNode<T>& NodeA, tree::TreeNode<T>& NodeB);
+            static void Swap(std::shared_ptr<tree::TreeNode<T>> NodeA, std::shared_ptr<tree::TreeNode<T>> NodeB);
 
         // Operators
         public:
             // Shortcut content assignment
-            tree::TreeNode<T>& operator=(const T content);
+            std::shared_ptr<tree::TreeNode<T>> operator=(const T content);
             // Shortcut to append
-            tree::TreeNode<T>& operator<<(const T content);
-            tree::TreeNode<T>& operator<<(std::shared_ptr<tree::TreeNode<T>> node);
+            std::shared_ptr<tree::TreeNode<T>> operator<<(const T content);
+            std::shared_ptr<tree::TreeNode<T>> operator<<(std::shared_ptr<tree::TreeNode<T>> node);
             // Comparisons
             friend bool operator==(const tree::TreeNode<T>& lhs, const tree::TreeNode<T>& rhs);
             friend bool operator==(const tree::TreeNode<T>& lhs, const T& rhs);
@@ -192,13 +192,15 @@ namespace tree
              */
             Tree();
             Tree(std::shared_ptr<tree::TreeNode<T>> node);
+            Tree(const T content);
             ~Tree();
             
             void Clear();
-            unsigned int TreeSize();
-            unsigned int TreeSize(tree::TreeNode<T> *startingNode);
+            std::size_t TreeSize();
+            std::size_t TreeSize(std::shared_ptr<tree::TreeNode<T>> startingNode);
 
-            void RootNode(tree::TreeNode<T> *node);
+            void AddRootNode(std::shared_ptr<tree::TreeNode<T>> node, int index = -1);
+            void AddRootNode(const T content, int index = -1);
             std::vector<std::shared_ptr<tree::TreeNode<T>>> RootNode() {return m_root;}
     };
 }
@@ -385,21 +387,33 @@ int tree::TreeNode<T>::FindChild(std::shared_ptr<tree::TreeNode<T>> node)
 
 
 template<typename T>
-void tree::TreeNode<T>::Swap(tree::TreeNode<T>& NodeA, tree::TreeNode<T>& NodeB)
+void tree::TreeNode<T>::Swap(std::shared_ptr<tree::TreeNode<T>> NodeA, std::shared_ptr<tree::TreeNode<T>> NodeB)
 {
     // This only swaps the contents(value) of the nodes
-    T temp = NodeA.m_content;
-    NodeA.m_content = NodeB.m_content;
-    NodeB.m_content = temp;
+    T temp = NodeA->m_content;
+    NodeA->m_content = NodeB->m_content;
+    NodeB->m_content = temp;
 }
 
 // Operators
 
 template<typename T>
-tree::TreeNode<T>& tree::TreeNode<T>::operator=(const T content)
+std::shared_ptr<tree::TreeNode<T>> tree::TreeNode<T>::operator=(const T content)
 {
     this->m_content = content;
-    return *this;
+    return this->GetSharedPtr();
+}
+
+template<typename T>
+std::shared_ptr<tree::TreeNode<T>> tree::TreeNode<T>::operator<<(const T content)
+{
+    return this->Append(content);
+}
+
+template<typename T>
+std::shared_ptr<tree::TreeNode<T>> tree::TreeNode<T>::operator<<(std::shared_ptr<tree::TreeNode<T>> node)
+{
+    return this->Append(node);
 }
 
 template<typename T>
@@ -429,43 +443,118 @@ bool operator!=(const tree::TreeNode<T>& lhs, const T& rhs)
 template<typename T>
 bool operator< (const tree::TreeNode<T>& lhs, const tree::TreeNode<T>& rhs)
 {
+    return (lhs.m_content < rhs.m_content);
 }
 
 template<typename T>
 bool operator< (const tree::TreeNode<T>& lhs, const T& rhs)
 {
+    return (lhs.m_content < rhs);
 }
 
 template<typename T>
 bool operator> (const tree::TreeNode<T>& lhs, const tree::TreeNode<T>& rhs)
 {
+    return (lhs.m_content > rhs.m_content);
 }
 
 template<typename T>
 bool operator> (const tree::TreeNode<T>& lhs, const T& rhs)
 {
+    return (lhs.m_content > rhs);
 }
 
 template<typename T>
 bool operator<=(const tree::TreeNode<T>& lhs, const tree::TreeNode<T>& rhs)
 {
+    return (lhs.m_content <= rhs.m_content);
 }
 
 template<typename T>
 bool operator<=(const tree::TreeNode<T>& lhs, const T& rhs)
 {
+    return (lhs.m_content <= rhs);
 }
 
 template<typename T>
 bool operator>=(const tree::TreeNode<T>& lhs, const tree::TreeNode<T>& rhs)
 {
+    return (lhs.m_content >= rhs.m_content);
 }
 
 template<typename T>
 bool operator>=(const tree::TreeNode<T>& lhs, const T& rhs)
 {
+    return (lhs.m_content >= rhs);
 }
 
 //------------------------------------------------------------------------------
 // Trees
 //------------------------------------------------------------------------------
+
+template<typename T>
+tree::Tree<T>::Tree()
+{
+}
+
+template<typename T>
+tree::Tree<T>::Tree(std::shared_ptr<tree::TreeNode<T>> node)
+{
+    m_root.push_back(node);
+}
+
+template<typename T>
+tree::Tree<T>::Tree(const T content)
+{
+    m_root.push_back(std::shared_ptr<tree::TreeNode<T>>(new tree::TreeNode<T>(content)));
+}
+
+template<typename T>
+void tree::Tree<T>::Clear()
+{
+    m_root.clear();
+}
+
+template<typename T>
+std::size_t tree::Tree<T>::TreeSize()
+{
+    // Go through the entire tree
+    return 0;
+}
+
+template<typename T>
+std::size_t tree::Tree<T>::TreeSize(std::shared_ptr<tree::TreeNode<T>> startingNode)
+{
+    return 0;
+}
+
+template<typename T>
+void tree::Tree<T>::AddRootNode(std::shared_ptr<tree::TreeNode<T>> node, int index)
+{
+    if(node.get() == nullptr)
+    {
+        throw  std::invalid_argument("Cannot pass nullptr");
+    }
+    
+    if((index < 0) || (index > m_root.size()))
+    {
+        m_root.push_back(node);
+    }
+    else
+    {
+        m_root.insert(m_root.begin + index, node);
+    }
+}
+
+template<typename T>
+void tree::Tree<T>::AddRootNode(const T content, int index)
+{
+    if((index < 0) || (index > m_root.size()))
+    {
+        m_root.push_back(std::shared_ptr<tree::TreeNode<T>>(new tree::TreeNode<T>(content)));
+    }
+    else
+    {
+        m_root.insert(m_root.begin + index, std::shared_ptr<tree::TreeNode<T>>(new tree::TreeNode<T>(content)));
+    }
+}
