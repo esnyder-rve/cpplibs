@@ -28,8 +28,9 @@ namespace tree
     {
         private:
             T m_content;
+            std::shared_ptr<tree::BTreeNode<T>> m_childA;
+            std::shared_ptr<tree::BTreeNode<T>> m_childB;
             std::weak_ptr<tree::BTreeNode<T>> m_parent;
-            std::pair<std::shared_ptr<tree::BTreeNode<T>>,std::shared_ptr<tree::BTreeNode<T>>> m_children;
         public:
             // Constructors:
 
@@ -44,7 +45,6 @@ namespace tree
              * \param    value  what the node will contain.
              */
             BTreeNode(T& value);
-            BTreeNode(T& value, std::shared_ptr<tree::BTreeNode<T>> parent);
 
             std::shared_ptr<tree::BTreeNode<T>> GetSharedPtr();
 
@@ -65,7 +65,7 @@ namespace tree
              * \return  This function returns as a convience, a pointer
              *          to the new node.
              */
-            std::shared_ptr<tree::BTreeNode<T>> Insert(T value, unsigned int index);
+            std::shared_ptr<tree::BTreeNode<T>> Insert(T value);
 
             /**
              * \brief    Insert an existing node at specific index.
@@ -88,9 +88,20 @@ namespace tree
              * \return  This function returns as a convience, a pointer
              *          to the newly inserted node.
              */
-            std::shared_ptr<tree::BTreeNode<T>> Insert(std::shared_ptr<tree::BTreeNode<T>> node, unsigned int index);
-            std::shared_ptr<tree::BTreeNode<T>> Append(T value);
-            std::shared_ptr<tree::BTreeNode<T>> Append(std::shared_ptr<tree::BTreeNode<T>> node);
+            std::shared_ptr<tree::BTreeNode<T>> Insert(std::shared_ptr<tree::BTreeNode<T>> node);
+
+            // Swaps the left and right child
+            void SwapChildren();
+
+            std::shared_ptr<tree::BTreeNode<T>> ChildA();
+            std::shared_ptr<tree::BTreeNode<T>> ChildA(T value);
+            std::shared_ptr<tree::BTreeNode<T>> ChildA(std::shared_ptr<tree::BTreeNode<T>> node);
+            std::shared_ptr<tree::BTreeNode<T>> ChildB();
+            std::shared_ptr<tree::BTreeNode<T>> ChildB(T value);
+            std::shared_ptr<tree::BTreeNode<T>> ChildB(std::shared_ptr<tree::BTreeNode<T>> node);
+
+            std::shared_ptr<tree::BTreeNode<T>> ClearChildA();
+            std::shared_ptr<tree::BTreeNode<T>> ClearChildB();
 
             /**
              * \brief  Removes a child by index
@@ -129,8 +140,6 @@ namespace tree
              * \detail The current node gets detached from the tree with its children intact.
              */
             std::shared_ptr<tree::BTreeNode<T>> Detatch();
-
-            int FindChild(std::shared_ptr<tree::BTreeNode<T>> node);
 
             // Deletes current node and returns the children of the dropped node
             std::pair<std::shared_ptr<tree::BTreeNode<T>>, std::shared_ptr<tree::BTreeNode<T>>> Drop();
@@ -196,6 +205,8 @@ namespace tree
             std::size_t TreeSize(std::shared_ptr<tree::BTreeNode<T>> startingNode);
 
             std::shared_ptr<tree::BTreeNode<T>> RootNode() {return m_root;}
+            void RootNode(T value);
+            void RootNode(std::shared_ptr<tree::BTreeNode<T>> node);
     };
 }
 
@@ -220,12 +231,6 @@ tree::BTreeNode<T>::BTreeNode(T& value)
     m_content = value;
 }
 
-template<typename T>
-tree::BTreeNode<T>::BTreeNode(T& value, std::shared_ptr<tree::BTreeNode<T>> parent)
-{
-    m_content = value;
-    m_parent = parent;
-}
 
 template<typename T>
 std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::GetSharedPtr()
@@ -234,151 +239,190 @@ std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::GetSharedPtr()
 }
 
 template<typename T>
-std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Insert(T value, unsigned int index)
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Insert(T value)
 {
-    std::shared_ptr<tree::BTreeNode<T>> ret(nullptr);
-    if(index <= m_children.size())
+    if(m_childA.get() == nullptr)
     {
-        // Insert at requested location
-        ret.reset(new tree::BTreeNode<T>(value, this));
-        m_children.insert(m_children.begin()+index, ret);
+        m_childA.reset(new tree::BTreeNode<T>(value));
+        m_childA.get()->m_parent = this->GetSharedPtr();
+        return m_childA;
+    }
+    else if(m_childB.get() == nullptr)
+    {
+        m_childB.reset(new tree::BTreeNode<T>(value));
+        m_childB.get()->m_parent = this->GetSharedPtr();
+        return m_childB;
     }
     else
     {
-        // Append instead
-        ret.reset(this->Append(value));
+        throw std::logic_error("Binary tree node already has two children");
     }
-
-    return ret;
 }
 
-
 template<typename T>
-std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Insert(std::shared_ptr<tree::BTreeNode<T>> node, unsigned int index)
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Insert(std::shared_ptr<tree::BTreeNode<T>> node)
 {
-    if(node != nullptr)
+    if(m_childA.get() == nullptr)
     {
-        if(index <= m_children.size())
-        {
-            node->m_parent = this;
-            m_children.insert(m_children.begin() + index, node);
-        }
-        else
-        {
-            // Instead of just erroring out if the index is out of range,
-            // just append to the end
-            this->Append(node);
-        }
+        m_childA = node;
+        m_childA.get()->m_parent = this->GetSharedPtr();
+        return m_childA;
+    }
+    else if(m_childB.get() == nullptr)
+    {
+        m_childB = node;
+        m_childB.get()->m_parent = this->GetSharedPtr();
+        return m_childB;
     }
     else
     {
-        throw std::invalid_argument("Cannot pass nullptr");
+        throw std::logic_error("Binary tree node already has two children");
     }
-
-    return node;
 }
 
 template<typename T>
-std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Append(T value)
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildA()
 {
-    std::shared_ptr<tree::BTreeNode<T>> node(new tree::BTreeNode<T>(value, this));
-    m_children.push_back(node);
-
-    return node;
+    return m_childA;
 }
 
 template<typename T>
-std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Append(std::shared_ptr<tree::BTreeNode<T>> node)
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildA(T value)
 {
-    if(node != nullptr)
+    if(m_childA.get() == nullptr)
     {
-        node->m_parent = this;
-        m_children.push_back(node);
+        m_childA.reset(new tree::BTreeNode<T>(value));
+        return m_childA;
     }
     else
     {
-        // Throw exception.
-        throw std::invalid_argument("Cannot pass nullptr");
+        auto temp = m_childA;
+        m_childA.reset(new tree::BTreeNode<T>(value));
+        temp->m_parent.reset();
+        return temp;
     }
+}
 
-    return node;
+template<typename T>
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildA(std::shared_ptr<tree::BTreeNode<T>> node)
+{
+    if(m_childA.get() == nullptr)
+    {
+        m_childA = node;
+        return m_childA;
+    }
+    else
+    {
+        auto temp = m_childA;
+        m_childA = node;
+        temp->m_parent.reset();
+        return temp;
+    }
+}
+
+template<typename T>
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildB()
+{
+    return m_childB;
+}
+
+template<typename T>
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildB(T value)
+{
+    if(m_childB.get() == nullptr)
+    {
+        m_childB.reset(new tree::BTreeNode<T>(value));
+        return m_childB;
+    }
+    else
+    {
+        auto temp = m_childB;
+        m_childB.reset(new tree::BTreeNode<T>(value));
+        temp->m_parent.reset();
+        return temp;
+    }
+}
+
+template<typename T>
+std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::ChildB(std::shared_ptr<tree::BTreeNode<T>> node)
+{
+    if(m_childA.get() == nullptr)
+    {
+        m_childA = node;
+        return m_childA;
+    }
+    else
+    {
+        auto temp = m_childA;
+        m_childA = node;
+        temp->m_parent.reset();
+        return temp;
+    }
 }
 
 template<typename T>
 std::shared_ptr<tree::BTreeNode<T>> tree::BTreeNode<T>::Detatch()
 {
-    if(m_parent != nullptr)
+    auto parent = m_parent.lock();
+    if(parent != nullptr)
     {
-        if(auto parent = m_parent.lock())
+        if(parent->m_childA == this->GetSharedPtr())
         {
-            parent->RemoveChild(this->GetSharedPtr());
+            parent->ClearChildA();
         }
-        else
+        else if(parent->m_childB == this->GetSharedPtr())
         {
-            // Parent does not exist
-            return nullptr;
+            parent->ClearChildB();
         }
     }
+    m_parent.reset();
     return this->GetSharedPtr();
-}
-
-template<typename T>
-void tree::BTreeNode<T>::RemoveChild(unsigned int index)
-{
-    if(index >= m_children.size())
-    {
-        throw std::out_of_range("Index out of range");
-    }
-    else
-    {
-        m_children.erase(m_children.begin() + index);
-    }
-}
-
-template<typename T>
-void tree::BTreeNode<T>::RemoveChild(std::shared_ptr<tree::BTreeNode<T>> node)
-{
-    auto result = std::find(m_children.begin(), m_children.end(), node);
-    if(result != m_children.end())
-    {
-        m_children.erase(result);
-    }
 }
 
 template<typename T>
 void tree::BTreeNode<T>::ClearChildren()
 {
-    m_children.clear();
+    m_childA.reset();
+    m_childB.reset();
 }
 
 template<typename T>
-std::vector<std::shared_ptr<tree::BTreeNode<T>>> tree::BTreeNode<T>::Drop()
+std::pair<std::shared_ptr<tree::BTreeNode<T>>, std::shared_ptr<tree::BTreeNode<T>>> tree::BTreeNode<T>::Drop()
 {
-    if(auto parent = m_parent.lock())
+    auto parent = m_parent.lock();
+    if(parent != nullptr)
     {
-        parent->RemoveChild(this->GetSharedPtr());
+        if(parent->m_childA == this->GetSharedPtr())
+        {
+            parent->ClearChildA();
+        }
+        else if(parent->m_childB == this->GetSharedPtr())
+        {
+            parent->ClearChildB();
+        }
     }
-    return m_children;
+    return std::pair<std::shared_ptr<tree::BTreeNode<T>>, std::shared_ptr<tree::BTreeNode<T>>>(m_childA, m_childB);
 }
 
 template<typename T>
 void tree::BTreeNode<T>::RecursiveDrop()
 {
-    for(auto child : m_children)
+    m_childA->RecursiveDrop();
+    m_childB->RecursiveDrop();
+
+    auto parent = m_parent.lock();
+    if(parent != nullptr)
     {
-        child->RecursiveDrop();
+        if(parent->m_childA == this->GetSharedPtr())
+        {
+            parent->ClearChildA();
+        }
+        else if(parent->m_childB == this->GetSharedPtr())
+        {
+            parent->ClearChildB();
+        }
     }
-
-    m_children.clear();
 }
-
-template<typename T>
-int tree::BTreeNode<T>::FindChild(std::shared_ptr<tree::BTreeNode<T>> node)
-{
-    auto result = std::find(m_children.begin(), m_children.end(), node);
-    return (result == m_children.end()) ? -1 : (m_children.end() - result);
-}
-
 
 template<typename T>
 void tree::BTreeNode<T>::Swap(std::shared_ptr<tree::BTreeNode<T>> NodeA, std::shared_ptr<tree::BTreeNode<T>> NodeB)
@@ -506,7 +550,7 @@ tree::BTree<T>::BTree(const T content)
 template<typename T>
 void tree::BTree<T>::Clear()
 {
-    m_root.clear();
+    m_root.reset();
 }
 
 template<typename T>
@@ -523,32 +567,27 @@ std::size_t tree::BTree<T>::TreeSize(std::shared_ptr<tree::BTreeNode<T>> startin
 }
 
 template<typename T>
-void tree::BTree<T>::AddRootNode(std::shared_ptr<tree::BTreeNode<T>> node, int index)
+void tree::BTree<T>::RootNode(std::shared_ptr<tree::BTreeNode<T>> node)
 {
+    if(m_root.get() != nullptr)
+    {
+        throw std::logic_error("Binary tree alread has a root node, please Clear() it first.");
+    }
     if(node.get() == nullptr)
     {
-        throw  std::invalid_argument("Cannot pass nullptr");
+        throw  std::invalid_argument("Cannot pass nullptr, did you mean Clear()?");
     }
     
-    if((index < 0) || (index > m_root.size()))
-    {
-        m_root.push_back(node);
-    }
-    else
-    {
-        m_root.insert(m_root.begin + index, node);
-    }
+    m_root.reset(node);
 }
 
 template<typename T>
-void tree::BTree<T>::AddRootNode(const T content, int index)
+void tree::BTree<T>::RootNode(T content)
 {
-    if((index < 0) || (index > m_root.size()))
+    if(m_root.get() != nullptr)
     {
-        m_root.push_back(std::shared_ptr<tree::BTreeNode<T>>(new tree::BTreeNode<T>(content)));
+        throw std::logic_error("Binary tree alread has a root node, please Clear() it first.");
     }
-    else
-    {
-        m_root.insert(m_root.begin + index, std::shared_ptr<tree::BTreeNode<T>>(new tree::BTreeNode<T>(content)));
-    }
+
+    m_root.reset(std::shared_ptr<tree::BTreeNode<T>>(new tree::BTreeNode<T>(content)));
 }
