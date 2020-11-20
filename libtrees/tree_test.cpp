@@ -16,7 +16,7 @@ void Test(bool expr, unsigned int test_no)
 
 void PrintNode(std::shared_ptr<tree::TreeNode<int>> node, unsigned int level)
 {
-    for(int i = 0; i < level; i++)
+    for(unsigned int i = 0; i < level; i++)
     {
         std::cout << "  ";
     }
